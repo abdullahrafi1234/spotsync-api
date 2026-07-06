@@ -14,20 +14,24 @@ import (
 )
 
 func main() {
-	// 1. Load .env
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, reading from system environment")
 	}
 
-	// 2. Connect database
 	config.ConnectDatabase()
 
-	// 3. Dependency Injection: Repository -> Service -> Handler
+	// Repositories
 	userRepo := repository.NewUserRepository(config.DB)
-	authService := service.NewAuthService(userRepo)
-	authHandler := handler.NewAuthHandler(authService)
+	zoneRepo := repository.NewZoneRepository(config.DB)
 
-	// 4. Create Echo instance
+	// Services
+	authService := service.NewAuthService(userRepo)
+	zoneService := service.NewZoneService(zoneRepo)
+
+	// Handlers
+	authHandler := handler.NewAuthHandler(authService)
+	zoneHandler := handler.NewZoneHandler(zoneService)
+
 	e := echo.New()
 
 	e.GET("/", func(c echo.Context) error {
@@ -36,9 +40,7 @@ func main() {
 		})
 	})
 
-	// 5. Register routes
-	routes.SetupRoutes(e, authHandler)
+	routes.SetupRoutes(e, authHandler, zoneHandler)
 
-	// 6. Start server
 	e.Logger.Fatal(e.Start(":8080"))
 }
