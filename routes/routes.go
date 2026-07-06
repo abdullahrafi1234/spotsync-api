@@ -7,8 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// SetupRoutes registers all API routes onto the Echo instance.
-func SetupRoutes(e *echo.Echo, authHandler *handler.AuthHandler, zoneHandler *handler.ZoneHandler) {
+func SetupRoutes(e *echo.Echo, authHandler *handler.AuthHandler, zoneHandler *handler.ZoneHandler, reservationHandler *handler.ReservationHandler) {
 	api := e.Group("/api/v1")
 
 	// Auth routes (public)
@@ -18,9 +17,14 @@ func SetupRoutes(e *echo.Echo, authHandler *handler.AuthHandler, zoneHandler *ha
 
 	// Zone routes
 	zones := api.Group("/zones")
-	zones.GET("", zoneHandler.GetAllZones)         // public
-	zones.GET("/:id", zoneHandler.GetZoneByID)     // public
-
-	// Admin-only: create zone (needs JWT + admin role)
+	zones.GET("", zoneHandler.GetAllZones)
+	zones.GET("/:id", zoneHandler.GetZoneByID)
 	zones.POST("", zoneHandler.CreateZone, middleware.JWTMiddleware, middleware.RequireAdmin)
+
+	// Reservation routes (all require authentication)
+	reservations := api.Group("/reservations", middleware.JWTMiddleware)
+	reservations.POST("", reservationHandler.Reserve)
+	reservations.GET("/my-reservations", reservationHandler.GetMyReservations)
+	reservations.DELETE("/:id", reservationHandler.Cancel)
+	reservations.GET("", reservationHandler.GetAllReservations, middleware.RequireAdmin)
 }

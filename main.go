@@ -23,14 +23,17 @@ func main() {
 	// Repositories
 	userRepo := repository.NewUserRepository(config.DB)
 	zoneRepo := repository.NewZoneRepository(config.DB)
+	reservationRepo := repository.NewReservationRepository(config.DB)
 
 	// Services
 	authService := service.NewAuthService(userRepo)
 	zoneService := service.NewZoneService(zoneRepo)
+	reservationService := service.NewReservationService(reservationRepo, zoneRepo)
 
 	// Handlers
 	authHandler := handler.NewAuthHandler(authService)
 	zoneHandler := handler.NewZoneHandler(zoneService)
+	reservationHandler := handler.NewReservationHandler(reservationService)
 
 	e := echo.New()
 
@@ -40,7 +43,7 @@ func main() {
 		})
 	})
 
-	routes.SetupRoutes(e, authHandler, zoneHandler)
+	routes.SetupRoutes(e, authHandler, zoneHandler, reservationHandler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
