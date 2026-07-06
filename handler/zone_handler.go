@@ -29,27 +29,16 @@ func (h *ZoneHandler) CreateZone(c echo.Context) error {
 	var req dto.CreateZoneRequest
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Invalid request body",
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Invalid request body")
 	}
 
 	if err := h.validate.Struct(req); err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Validation failed",
-			Errors:  err.Error(),
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Validation failed: "+err.Error())
 	}
 
 	zone, err := h.zoneService.CreateZone(req)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
-			Success: false,
-			Message: "Failed to create zone",
-			Errors:  err.Error(),
-		})
+		return err // will be logged + shown as generic 500 by central handler
 	}
 
 	return c.JSON(http.StatusCreated, utils.SuccessResponse{
@@ -63,10 +52,7 @@ func (h *ZoneHandler) CreateZone(c echo.Context) error {
 func (h *ZoneHandler) GetAllZones(c echo.Context) error {
 	zones, err := h.zoneService.GetAllZones()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
-			Success: false,
-			Message: "Failed to fetch zones",
-		})
+		return err
 	}
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse{
@@ -78,22 +64,16 @@ func (h *ZoneHandler) GetAllZones(c echo.Context) error {
 
 // GetZoneByID handles GET /api/v1/zones/:id (public)
 func (h *ZoneHandler) GetZoneByID(c echo.Context) error {
-	// URL param is always a string, so we must convert it to uint
 	idParam := c.Param("id")
 	id, err := strconv.ParseUint(idParam, 10, 64)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Invalid zone id",
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Invalid zone id")
 	}
 
 	zone, err := h.zoneService.GetZoneByID(uint(id))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, utils.ErrorResponse{
-			Success: false,
-			Message: "Zone not found",
-		})
+		// If it's gorm.ErrRecordNotFound, CentralErrorHandler turns it into 404 automatically
+		return err
 	}
 
 	return c.JSON(http.StatusOK, utils.SuccessResponse{

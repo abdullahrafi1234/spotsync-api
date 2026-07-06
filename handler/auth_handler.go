@@ -11,13 +11,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// AuthHandler holds dependencies needed by auth-related HTTP handlers.
 type AuthHandler struct {
 	authService service.AuthService
 	validate    *validator.Validate
 }
 
-// NewAuthHandler creates a new AuthHandler, injecting the service it needs.
 func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
@@ -29,33 +27,20 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 func (h *AuthHandler) Register(c echo.Context) error {
 	var req dto.RegisterRequest
 
-	// 1. Bind incoming JSON to our struct
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Invalid request body",
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	// 2. Validate using the tags we defined in the DTO
 	if err := h.validate.Struct(req); err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Validation failed",
-			Errors:  err.Error(),
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Validation failed: "+err.Error())
 	}
 
-	// 3. Call the service to do the actual work
 	user, err := h.authService.Register(req)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: err.Error(),
-		})
+		// Business errors from the service (e.g. "email already registered")
+		return utils.NewAppError(http.StatusBadRequest, err.Error())
 	}
 
-	// 4. Build a safe response (no password field)
 	res := dto.UserResponse{
 		ID:        user.ID,
 		Name:      user.Name,
@@ -77,26 +62,16 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	var req dto.LoginRequest
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Invalid request body",
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Invalid request body")
 	}
 
 	if err := h.validate.Struct(req); err != nil {
-		return c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Success: false,
-			Message: "Validation failed",
-			Errors:  err.Error(),
-		})
+		return utils.NewAppError(http.StatusBadRequest, "Validation failed: "+err.Error())
 	}
 
 	token, user, err := h.authService.Login(req)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, utils.ErrorResponse{
-			Success: false,
-			Message: err.Error(),
-		})
+		return utils.NewAppError(http.StatusUnauthorized, err.Error())
 	}
 
 	res := dto.LoginResponse{
