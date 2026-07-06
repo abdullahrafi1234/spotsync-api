@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"spotsync-api/config"
 	"spotsync-api/handler"
@@ -15,7 +16,7 @@ import (
 )
 
 func main() {
-	// 1. Load .env
+	// 1. Load .env (for local development; Render/Railway inject env vars directly)
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, reading from system environment")
 	}
@@ -41,8 +42,8 @@ func main() {
 	// 6. Create Echo instance
 	e := echo.New()
 
-	// Register our centralized error handler — every returned error
-	// from any handler funnels through here.
+	// Centralized error handler — every returned error from any handler
+	// funnels through here instead of scattering c.JSON(...) everywhere.
 	e.HTTPErrorHandler = utils.CentralErrorHandler
 
 	e.GET("/", func(c echo.Context) error {
@@ -51,9 +52,14 @@ func main() {
 		})
 	})
 
-	// 7. Register routes
+	// 7. Register all routes
 	routes.SetupRoutes(e, authHandler, zoneHandler, reservationHandler)
 
-	// 8. Start server
-	e.Logger.Fatal(e.Start(":8080"))
+	// 8. Start server — use PORT from environment if provided (Render sets this),
+	// otherwise default to 8080 for local development.
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	e.Logger.Fatal(e.Start(":" + port))
 }
