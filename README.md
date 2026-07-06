@@ -3,9 +3,11 @@
 Smart Parking & EV Charging Reservation System — built with Go, Echo, GORM, and PostgreSQL.
 
 ## 🔗 Live URL
-https://spotsync-api.onrender.com
+
+https://spotsync-api-896o.onrender.com/
 
 ## ✨ Features
+
 - JWT authentication with role-based access control (driver/admin)
 - Parking zone management with dynamic available-spot calculation
 - Concurrency-safe reservation system using database row-locking
@@ -13,6 +15,7 @@ https://spotsync-api.onrender.com
 - Centralized error handling
 
 ## 🛠️ Tech Stack
+
 - Go 1.26
 - Echo (web framework)
 - GORM + PostgreSQL (NeonDB)
@@ -20,6 +23,7 @@ https://spotsync-api.onrender.com
 - go-playground/validator
 
 ## 🏛️ Architecture
+
 Handler → Service → Repository → Model
 
 - **Handler**: binds & validates requests, extracts JWT claims, returns JSON
@@ -53,17 +57,17 @@ Dependencies are wired manually in `main.go` (Repository → Service → Handler
 
 ## 📡 API Endpoints
 
-| Method | Endpoint | Access |
-|---|---|---|
-| POST | /api/v1/auth/register | Public |
-| POST | /api/v1/auth/login | Public |
-| GET | /api/v1/zones | Public |
-| GET | /api/v1/zones/:id | Public |
-| POST | /api/v1/zones | Admin |
-| POST | /api/v1/reservations | Authenticated |
-| GET | /api/v1/reservations/my-reservations | Authenticated |
-| DELETE | /api/v1/reservations/:id | Authenticated (own) / Admin (any) |
-| GET | /api/v1/reservations | Admin |
+| Method | Endpoint                             | Access                            |
+| ------ | ------------------------------------ | --------------------------------- |
+| POST   | /api/v1/auth/register                | Public                            |
+| POST   | /api/v1/auth/login                   | Public                            |
+| GET    | /api/v1/zones                        | Public                            |
+| GET    | /api/v1/zones/:id                    | Public                            |
+| POST   | /api/v1/zones                        | Admin                             |
+| POST   | /api/v1/reservations                 | Authenticated                     |
+| GET    | /api/v1/reservations/my-reservations | Authenticated                     |
+| DELETE | /api/v1/reservations/:id             | Authenticated (own) / Admin (any) |
+| GET    | /api/v1/reservations                 | Admin                             |
 
 ## 🔒 Concurrency Handling
 
